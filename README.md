@@ -1,3 +1,15 @@
+# shoving some notes here..t
+* <ins>%LocalAppData%\Microsoft\outlook <ins>- Hightlight any .ost files (support can turn off cache mode)
+* <ins>%LocalAppData%\crashdumps <ins> - get ls info and offer to delete 
+* desktop - downloads and other folders - get details
+* get c:\pagefile.sys and swapfile.sys
+*  get temp files if they exists c:\temp, c:\windows\temp %localappdata Temp%
+
+
+
+
+
+# Original Readme
 # Teams Classic Cache Cleanup PowerShell script
 This is a PowerShell script written with the help of ChatGPT that will delete Microsoft Teams Classic (previously Teams for work or school) at <ins>%AppData%\Microsoft\Teams</ins> and its cache at <ins>%LocalAppData%\Microsoft\Teams</ins> from all Windows user profiles, leaving these two folders empty. Requires running as an administrator since it affects all users on the computer.
 
