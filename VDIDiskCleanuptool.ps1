@@ -26,6 +26,11 @@
 
 #>
 
+# Parameters Section (for testing so I don't need pass parameters)
+$Hostnames = 'hostname1', 'hostname2'
+$Domain = 'domain.com'
+$PartialPaths = 'Downloads', 'Documents', 'Desktop', 'Pictures', 'Music', 'Videos', 'AppData\Local\Temp', 'AppData\Local\CrashDumps'
+
 # Functions Section
 
 # function that asks the user to confirm if the want to proceed, it will double check if the user wants to proceed, if neither Y or N is entered , it will ask again, it should handle lowercase and uppercase
@@ -63,6 +68,30 @@ function Get-DiskSpace {
     return Get-WmiObject -ComputerName $FQDN -Class Win32_LogicalDisk -Filter "DeviceID='C:'" | Select-Object Size, FreeSpace
 }
 
+# Function that checks for the existence of Pagefile.sys, pagefile.sys and Hiberfil.sys in the root of C: drive and returns if it exists and what size it is
+function Get-SystemFiles {
+    param (
+        [string]$FQDN
+    )
+    $results = @()
+    $systemFiles = @('Pagefile.sys', 'pagefile.sys', 'Hiberfil.sys')
+    foreach ($systemFile in $systemFiles) {
+        $fullPath = "\\$FQDN\c$\$systemFile"
+        $exists = Test-Path -Path $fullPath
+        if ($exists) {
+            $size = (Get-Item -Path $fullPath).Length
+        } else {
+            $size = 0
+        }
+        $results += [PSCustomObject]@{
+            Name = $systemFile
+            Exists = $exists
+            Size = $size
+        }
+    }
+    return $results
+}
+
 # Function that takes FQDN as input and returns the contents of C:\temp folder, including size and last modified date
 function Get-TempFolderContents {
     param (
@@ -80,7 +109,7 @@ function Get-UserFolders {
 }
 
 # Function that takes a path to a users folder and an array of partial paths and join paths them then and test-paths them and return the results along with the full path tested
-function Test-Path {
+function Test-UserFolderPaths {
     param (
         [string]$UserFolderPath,
         [string[]]$PartialPaths
@@ -104,8 +133,16 @@ function Get-FolderContents {
     return Get-ChildItem -Path $FolderPath | Select-Object Name, Length, LastWriteTime
 }
 
+# Function that search's user's localappdata folder for .ost files and reports on the name, size and last modified date
+function Get-OSTFiles {
+    param (
+        [string]$UserFolderPath
+    )
+    return Get-ChildItem -Path "$UserFolderPath\Local\Microsoft\Outlook" -Filter *.ost | Select-Object Name, Length, LastWriteTime
+}
+
 # Create a Function that takes a folder path and deletes all the files in the folder
-function Delete-Files {
+function Remove-Files {
     param (
         [string]$FolderPath
     )
@@ -113,12 +150,49 @@ function Delete-Files {
 }
 
 
-# Main Script Section
-# Parse parameters
-param (
-    [string]$Parameter1,
-    [int]$Parameter2
-)
+# Controller Functions Section
 
-# Call functions
-Get-SampleFunction -Parameter1 $Parameter1 -Parameter2 $Parameter2
+# Function that takes hostname, domain and partial paths as input and runs the cleanup process
+function Run-Cleanup {
+    param (
+        [string]$Hostname,
+        [string]$Domain,
+        [string[]]$PartialPaths
+    )
+    $FQDN = Get-FQDN -Hostname $Hostname -Domain $Domain
+    if (Test-Connection -FQDN $FQDN) {
+        $diskSpace = Get-DiskSpace -FQDN $FQDN
+        Write-Host "Computer: $Hostname"
+        Write-Host "Disk Size: $($diskSpace.Size)"
+        Write-Host "Free Space: $($diskSpace.FreeSpace)"
+        $systemFiles = Get-SystemFiles -FQDN $FQDN
+        Write-Host "System Files:"
+        $systemFiles | Format-Table
+        $tempFolderContents = Get-TempFolderContents -FQDN $FQDN
+        Write-Host "Temp Folder Contents:"
+        $tempFolderContents | Format-Table
+        $userFolders = Get-UserFolders -FQDN $FQDN
+        foreach ($userFolder in $userFolders) {
+            Write-Host "User Folder: $($userFolder.Name)"
+            $OSTFiles = Get-OSTFiles -UserFolderPath $userFolder.FullName
+            Write-Host "OST Files:"
+            $OSTFiles | Format-Table
+            $results = Test-UserFolderPaths -UserFolderPath $userFolder.FullName -PartialPaths $PartialPaths
+            foreach ($result in $results) {
+                if ($result.Exists) {
+                    Write-Host "Path: $($result.Path) exists"
+                    $folderContents = Get-FolderContents -FolderPath $result.Path
+                    Write-Host "Folder Contents:"
+                    $folderContents | Format-Table
+                    if (Confirm-Action) {
+                        Delete-Files -FolderPath $result.Path
+                    }
+                } else {
+                    Write-Host "Path: $($result.Path) does not exist"
+                }
+            }
+        }
+    } else {
+        Write-Host "Host $Hostname is not reachable"
+    }
+}
