@@ -29,13 +29,13 @@
 # Parameters Section (for testing so I don't need pass parameters)
 $Hostnames = 'Hostname'
 $Domain = 'uk.uk.corp'
-$PartialPaths = 'Downloads', 'Documents', 'Desktop', 'Pictures', 'Music', 'Videos', 'AppData\Local\Temp', 'AppData\Local\CrashDumps'
+$PartialPaths = 'Downloads', 'AppData\Local\Temp', 'AppData\Local\CrashDumps','AppData\local\microsoft\teams','AppData\roaming\microsoft\teams'
 
 # Functions Section
 
 # function that asks the user to confirm if the want to proceed, it will double check if the user wants to proceed, if neither Y or N is entered , it will ask again, it should handle lowercase and uppercase
 function Confirm-Action {
-    $response = Read-Host "Do you want to proceed? (Y/N)"
+    $response = Read-Host "Do you want to Delete? (Y/N)"
     while ($response -notin 'Y', 'N') {
         $response = Read-Host "Please enter Y or N"
     }
@@ -142,12 +142,12 @@ function Get-OSTFiles {
     return Get-ChildItem -Path "$UserFolderPath\Local\Microsoft\Outlook" -Filter *.ost | Select-Object Name, Length, LastWriteTime
 }
 
-# Create a Function that takes a folder path and deletes all the files in the folder
+# Create a Function that takes a folder path and removes all the files in the folder including subfolders
 function Remove-Files {
     param (
         [string]$FolderPath
     )
-    Get-ChildItem -Path $FolderPath | Remove-Item -Force -Verbose
+    Remove-Item -Path $FolderPath -Recurse -Force
 }
 
 
