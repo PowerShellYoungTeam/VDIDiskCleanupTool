@@ -27,8 +27,8 @@
 #>
 
 # Parameters Section (for testing so I don't need pass parameters)
-$Hostnames = 'hostname1', 'hostname2'
-$Domain = 'domain.com'
+$Hostnames = 'Hostname'
+$Domain = 'uk.uk.corp'
 $PartialPaths = 'Downloads', 'Documents', 'Desktop', 'Pictures', 'Music', 'Videos', 'AppData\Local\Temp', 'AppData\Local\CrashDumps'
 
 # Functions Section
@@ -53,11 +53,11 @@ function Get-FQDN {
 }
 
 # Function that takes FQDN as input and checks if the host is reachable
-function Test-Connection {
+function Test-VDIConnection {
     param (
         [string]$FQDN
     )
-    return Test-Connection -ComputerName $FQDN -Count 1 -Quiet
+    return Test-Connection -ComputerName $FQDN -count 1 -quiet
 }
 
 # Function that takes FQDN as input and returns the disk size and free space for C: drive
@@ -65,7 +65,8 @@ function Get-DiskSpace {
     param (
         [string]$FQDN
     )
-    return Get-WmiObject -ComputerName $FQDN -Class Win32_LogicalDisk -Filter "DeviceID='C:'" | Select-Object Size, FreeSpace
+    $diskdeets = Get-WmiObject -Class Win32_LogicalDisk -ComputerName $FQDN | ? {$_. DriveType -eq 3} | select DeviceID, {$_.Size /1GB}, {$_.FreeSpace /1GB}
+    return $diskdeets
 }
 
 # Function that checks for the existence of Pagefile.sys, pagefile.sys and Hiberfil.sys in the root of C: drive and returns if it exists and what size it is
@@ -160,7 +161,10 @@ function Run-Cleanup {
         [string[]]$PartialPaths
     )
     $FQDN = Get-FQDN -Hostname $Hostname -Domain $Domain
-    if (Test-Connection -FQDN $FQDN) {
+
+    write-host $FQDN
+    Test-VDIConnection -FQDN $FQDN
+    if (Test-VDIConnection -FQDN $FQDN -verbose) {
         $diskSpace = Get-DiskSpace -FQDN $FQDN
         Write-Host "Computer: $Hostname"
         Write-Host "Disk Size: $($diskSpace.Size)"
@@ -185,7 +189,7 @@ function Run-Cleanup {
                     Write-Host "Folder Contents:"
                     $folderContents | Format-Table
                     if (Confirm-Action) {
-                        Delete-Files -FolderPath $result.Path
+                        Remove-Files -FolderPath $result.Path
                     }
                 } else {
                     Write-Host "Path: $($result.Path) does not exist"
@@ -196,3 +200,8 @@ function Run-Cleanup {
         Write-Host "Host $Hostname is not reachable"
     }
 }
+
+
+#test area###
+
+Run-Cleanup -Domain $Domain  -Hostname $Hostnames -PartialPaths $PartialPaths
