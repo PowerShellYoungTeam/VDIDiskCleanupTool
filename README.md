@@ -14,7 +14,12 @@ run fired via a controller function (need to tidy output etc..)
 
 ##ToDo
 * Planning a GUI controller function that can be used along with CLI controller Function
-* Console output needs to be clearer, also colouring text to help highlight (this can be used for GUI for consistency) 
+* Console output needs to be clearer, also colouring text to help highlight (this can be used for GUI for consistency)
+
+##Issues
+* Disk size not displaying right
+* system files not being found, double check..
+* don't ask to clear empty folders (also confirm that is reading right, but does appear to be)
 
 This was built by me spoon feeding Github Copilot.
 
