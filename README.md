@@ -1,10 +1,20 @@
+Expanded from the original script to target a couple more disk space eaters that I need to keep cleaning off VDIs (save waiting on WinDirStat)
 
+This now:
+1. tests the machine is online
+2. get disk space from C drive
+3. Get the size of pagefile etc..
+4. Get the size of C:\temp (loads of c**p get dumped there)
+5. for each user, we will grab the size of the below folders and give the user an option to clear them
+5.1  - 'Downloads' 'AppData\Local\Temp'  'AppData\Local\CrashDumps' 'AppData\local\microsoft\teams' 'AppData\roaming\microsoft\teams'
 
+run fired via a controller function (need to tidy output etc..) 
 
+* Run-Cleanup -Domain $Domain  -Hostname $Hostnames -PartialPaths $PartialPaths
 
+Planning a GUI controller function that can be used along with CLI controller Function
 
-
-
+This was built by me spoon feeding Github Copilot.
 
 # Original Readme
 # Teams Classic Cache Cleanup PowerShell script
