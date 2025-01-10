@@ -215,7 +215,6 @@ function Run-Cleanup {
                     $folderSizeMB = Get-FolderSize -FolderPath $result.Path
                     Write-Host "Size of $($result.Path): $folderSizeMB MB"
 
-                    # Prompt the user to confirm deletion
                     # Prompt the user to confirm deletion using Confirm-Action function
                     if (Confirm-Action) {
                         Remove-Files -FolderPath $result.Path
