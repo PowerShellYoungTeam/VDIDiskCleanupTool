@@ -12,7 +12,9 @@ run fired via a controller function (need to tidy output etc..)
 
 * Run-Cleanup -Domain $Domain  -Hostname $Hostnames -PartialPaths $PartialPaths
 
-Planning a GUI controller function that can be used along with CLI controller Function
+##ToDo
+* Planning a GUI controller function that can be used along with CLI controller Function
+* Console output needs to be clearer, also colouring text to help highlight (this can be used for GUI for consistency) 
 
 This was built by me spoon feeding Github Copilot.
 
