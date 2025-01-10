@@ -42,7 +42,6 @@ function Confirm-Action {
     return $response -eq 'Y'
 }
 
-
 # function that takes hostname and domain as input and returns the fqdn
 function Get-FQDN {
     param (
@@ -101,6 +100,20 @@ function Get-TempFolderContents {
     return Get-ChildItem -Path "\\$FQDN\c$\temp" | Select-Object Name, Length, LastWriteTime
 }
 
+# Function that takes FQDN as input and returns the size of the C:\temp folder including subfolders
+function Get-TempFolderSize {
+    param (
+        [string]$FQDN
+    )
+    $folderPath = "\\$FQDN\c$\temp"
+    if (Test-Path -Path $folderPath) {
+        $folderSize = (Get-ChildItem -Path $folderPath -Recurse | Measure-Object -Property Length -Sum).Sum
+        return [math]::Round($folderSize / 1MB, 2) # Return size in MB
+    } else {
+        return 0
+    }
+}
+
 # Function that takes FQDN as input and gets return all the non default user folders in c:\users
 function Get-UserFolders {
     param (
@@ -134,6 +147,15 @@ function Get-FolderContents {
     return Get-ChildItem -Path $FolderPath | Select-Object Name, Length, LastWriteTime
 }
 
+# Function that takes a folder path and returns the size of the folder including subfolders
+function Get-FolderSize {
+    param (
+        [string]$FolderPath
+    )
+    $folderSize = (Get-ChildItem -Path $FolderPath -Recurse | Measure-Object -Property Length -Sum).Sum
+    return [math]::Round($folderSize / 1GB, 2) # Return size in GB
+}
+
 # Function that search's user's localappdata folder for .ost files and reports on the name, size and last modified date
 function Get-OSTFiles {
     param (
@@ -150,7 +172,6 @@ function Remove-Files {
     Remove-Item -Path $FolderPath -Recurse -Force
 }
 
-
 # Controller Functions Section
 
 # Function that takes hostname, domain and partial paths as input and runs the cleanup process
@@ -162,34 +183,45 @@ function Run-Cleanup {
     )
     $FQDN = Get-FQDN -Hostname $Hostname -Domain $Domain
 
-    write-host $FQDN
-    Test-VDIConnection -FQDN $FQDN
-    if (Test-VDIConnection -FQDN $FQDN -verbose) {
+    Write-Host "Checking connection to $FQDN..."
+    if (Test-VDIConnection -FQDN $FQDN) {
+        Write-Host "Connected to $FQDN"
+
         $diskSpace = Get-DiskSpace -FQDN $FQDN
-        Write-Host "Computer: $Hostname"
-        Write-Host "Disk Size: $($diskSpace.Size)"
-        Write-Host "Free Space: $($diskSpace.FreeSpace)"
+        Write-Host "Disk Size: $($diskSpace.Size) GB"
+        Write-Host "Free Space: $($diskSpace.FreeSpace) GB"
+
         $systemFiles = Get-SystemFiles -FQDN $FQDN
         Write-Host "System Files:"
         $systemFiles | Format-Table
-        $tempFolderContents = Get-TempFolderContents -FQDN $FQDN
-        Write-Host "Temp Folder Contents:"
-        $tempFolderContents | Format-Table
+
+        $tempFolderSizeMB = Get-TempFolderSize -FQDN $FQDN
+        Write-Host "Size of Temp Folder (\\$FQDN\c$\temp): $tempFolderSizeMB MB"
+
         $userFolders = Get-UserFolders -FQDN $FQDN
         foreach ($userFolder in $userFolders) {
-            Write-Host "User Folder: $($userFolder.Name)"
+            Write-Host "Processing User Folder: $($userFolder.Name)"
+
             $OSTFiles = Get-OSTFiles -UserFolderPath $userFolder.FullName
-            Write-Host "OST Files:"
-            $OSTFiles | Format-Table
+            if ($OSTFiles) {
+                Write-Host "OST Files:"
+                $OSTFiles | Format-Table
+            }
+
             $results = Test-UserFolderPaths -UserFolderPath $userFolder.FullName -PartialPaths $PartialPaths
             foreach ($result in $results) {
                 if ($result.Exists) {
                     Write-Host "Path: $($result.Path) exists"
-                    $folderContents = Get-FolderContents -FolderPath $result.Path
-                    Write-Host "Folder Contents:"
-                    $folderContents | Format-Table
+                    $folderSizeMB = Get-FolderSize -FolderPath $result.Path
+                    Write-Host "Size of $($result.Path): $folderSizeMB MB"
+
+                    # Prompt the user to confirm deletion
+                    # Prompt the user to confirm deletion using Confirm-Action function
                     if (Confirm-Action) {
                         Remove-Files -FolderPath $result.Path
+                        Write-Host "Contents of $($result.Path) have been deleted."
+                    } else {
+                        Write-Host "Contents of $($result.Path) have not been deleted."
                     }
                 } else {
                     Write-Host "Path: $($result.Path) does not exist"
@@ -197,10 +229,9 @@ function Run-Cleanup {
             }
         }
     } else {
-        Write-Host "Host $Hostname is not reachable"
+        Write-Host "Failed to connect to $FQDN"
     }
 }
-
 
 #test area###
 
