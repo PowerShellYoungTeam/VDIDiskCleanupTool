@@ -1,9 +1,6 @@
-# shoving some notes here..t
-* <ins>%LocalAppData%\Microsoft\outlook <ins>- Hightlight any .ost files (support can turn off cache mode)
-* <ins>%LocalAppData%\crashdumps <ins> - get ls info and offer to delete 
-* desktop - downloads and other folders - get details
-* get c:\pagefile.sys and swapfile.sys
-*  get temp files if they exists c:\temp, c:\windows\temp %localappdata Temp%
+
+
+
 
 
 
