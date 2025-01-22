@@ -6,23 +6,24 @@
     This script is used to clean up the VDI disk space by deleting the old files.
 
 .PARAMETER Hostnames
-    hostname or an array of hostnames to run the script on.
+    single hostname or an array of hostnames for the run the script on.
 
 .PARAMETER Domain
     pass the domain for fqdn.
 
 .PARAMETER PartialPaths
-    array of partial paths to folders that need to be checked in the user folder.;,
+    array of partial paths to folders that need to be checked in the user's folder.
 
 .EXAMPLE
-    Example of how to use the script.
+    $PartialPaths = 'Downloads', 'AppData\Local\Temp', 'AppData\Local\CrashDumps','AppData\local\microsoft\teams','AppData\roaming\microsoft\teams'
+    Run-Cleanup -Domain 'uk.uk.corp'  -Hostname 'PcMcPCFace' -PartialPaths $PartialPaths
 
 .NOTES
     File Name      : VDIDiskCleanuptool.ps1
     Author         : 
     Prerequisite   : PowerShell V2.0
 
-    chucked togther with Gitlab Copilot's help
+    chucked togther with Gitlab Copilot's help, defo a work in progress, want CLI and GUI interface for it
 
 #>
 
